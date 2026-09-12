@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flappy Rabbit</title>
+
+<!-- Chewy font from Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  .chewy-regular {
+    font-family: "Chewy", system-ui;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 30%, #2c4a63 0%, #131c26 70%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Chewy", system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  /* =========================================================
+     RESPONSIVE WRAPPER — phone, tablet, PC
+     ========================================================= */
+  #wrapper {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    height: min(96vh, 141vw, 900px);
+    width: auto;
+    max-width: 96vw;
+    border-radius: 18px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.6), 0 0 0 3px rgba(255,255,255,0.07);
+    container-type: size;
+    overflow: hidden;
+  }
+
+  #game {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* ================= ABOUT BUTTON (top-right) ================= */
+  #aboutBtn {
+    position: absolute;
+    top: 2.6%;
+    right: 4%;
+    z-index: 20;
+    font-family: "Chewy", system-ui;
+    font-size: clamp(11px, 3.4cqw, 21px);
+    letter-spacing: 1px;
+    line-height: 1;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.55);
+    background: linear-gradient(180deg, #e0761f, #b8531a);
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    padding: 0.85em 1.3em 1em;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #7c3610, 0 8px 18px rgba(0,0,0,0.4);
+    transition: transform .12s ease, box-shadow .12s ease, opacity .3s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #aboutBtn:hover  { transform: translateY(-2px); }
+  #aboutBtn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #7c3610, 0 4px 10px rgba(0,0,0,0.4);
+  }
+  #aboutBtn.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+  }
+
+  /* ================= ALIYAN PRODUCTION INTRO ================= */
+  #aliyan {
+    position: absolute;
+    inset: 0;
+    background: #05070c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    transition: opacity 0.6s ease;
+  }
+  #aliyan.hide { opacity: 0; pointer-events: none; }
+
+  #aliyan::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 45%,
+      rgba(255,215,120,0.20) 0%,
+      rgba(255,215,120,0.05) 35%,
+      transparent 65%);
+    animation: glow 2s ease-in-out;
+  }
+  @keyframes glow {
+    0%   { opacity: 0; }
+    35%  { opacity: 1; }
+    100% { opacity: 0.7; }
+  }
+
+  .aliyan-ring {
+    position: relative;
+    width: 24cqw;
+    height: 24cqw;
+    border-radius: 50%;
+    border: 2px solid rgba(255,215,120,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 7cqw;
+    box-shadow: 0 0 40px rgba(255,215,120,0.45),
+                inset 0 0 25px rgba(255,215,120,0.2);
+    animation: ringIn 0.9s cubic-bezier(0.2,0.9,0.3,1.2);
+  }
+  .aliyan-ring::after {
+    content: "";
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,215,120,0.30);
+    animation: ringPulse 2s ease-out infinite;
+  }
+  @keyframes ringPulse {
+    0%   { transform: scale(0.9); opacity: 0.9; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+  @keyframes ringIn {
+    0%   { transform: scale(0.4) rotate(-45deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  .aliyan-ring span {
+    font-family: "Chewy", system-ui;
+    font-size: 13cqw;
+    line-height: 1;
+    padding-top: 1.4cqw;
+    color: #ffffff;
+    text-shadow: 0 0 18px rgba(255,215,120,0.9), 0 0 4px rgba(255,215,120,1);
+  }
+
+  .aliyan-text {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    animation: fadeUp 1s ease-out 0.35s both;
+  }
+  .aliyan-text .small {
+    font-family: "Chewy", system-ui;
+    font-size: 3.6cqw;
+    letter-spacing: 1.6cqw;
+    color: #ffffff;
+    opacity: 0.85;
+    margin-bottom: 1.5cqw;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(255,215,120,0.6);
+  }
+  .aliyan-text .big {
+    font-family: "Chewy", system-ui;
+    font-size: 9.5cqw;
+    letter-spacing: 0.4cqw;
+    line-height: 1.1;
+    color: #ffffff;
+    text-shadow: 0 0 24px rgba(255,215,120,0.65), 0 2px 6px rgba(0,0,0,0.6);
+  }
+  .aliyan-text .big em {
+    font-style: normal;
+    color: #ffffff;
+    text-shadow: 0 0 22px rgba(255,215,120,1), 0 0 8px rgba(255,215,120,0.9);
+  }
+  .aliyan-text .rule {
+    width: 22cqw;
+    height: 1px;
+    margin: 4cqw auto 0;
+    background: linear-gradient(90deg, transparent, rgba(255,215,120,0.9), transparent);
+  }
+  @keyframes fadeUp {
+    0%   { opacity: 0; transform: translateY(14px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ================= MAIN SPLASH ================= */
+  #splash {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 25%,
+      #ffe9b8 0%, #ffc978 40%, #f79d3d 75%, #d96e18 100%);
+    transition: opacity .55s ease, transform .55s ease;
+    z-index: 10;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #splash.show { opacity: 1; pointer-events: auto; }
+  #splash.hide { opacity: 0; transform: scale(1.06); pointer-events: none; }
+
+  #splash::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    background: repeating-conic-gradient(from 0deg,
+      rgba(255,255,255,0.10) 0deg 6deg,
+      rgba(255,255,255,0.00) 6deg 18deg);
+    animation: spin 60s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .splash-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0 7cqw;
+  }
+
+  .bunny-badge {
+    width: 32cqw;
+    height: 32cqw;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 14px 34px rgba(120,50,10,0.5),
+                inset 0 -6px 0 rgba(224,118,31,0.25),
+                0 0 0 3px rgba(255,255,255,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5cqw;
+    animation: bob 2.1s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50%      { transform: translateY(-10px) rotate(2deg); }
+  }
+  .bunny-badge svg { width: 72%; height: 72%; }
+
+  .title {
+    font-family: "Chewy", system-ui;
+    font-size: 15.5cqw;
+    line-height: 1;
+    letter-spacing: 0.4cqw;
+    color: #ffffff;
+    text-align: center;
+    text-shadow:
+      0 3px 0 rgba(140,60,10,0.55),
+      0 8px 22px rgba(80,30,0,0.55),
+      0 0 3px rgba(0,0,0,0.35);
+  }
+  .subtitle {
+    margin-top: 2.4cqw;
+    font-family: "Chewy", system-ui;
+    font-size: 4.4cqw;
+    letter-spacing: 0.7cqw;
+    color: #ffffff;
+    text-transform: uppercase;
+    text-shadow:
+      0 2px 0 rgba(140,60,10,0.5),
+      0 6px 14px rgba(80,30,0,0.5);
+  }
+
+  .play-btn {
+    margin-top: 9cqw;
+    padding: 2.6cqw 13cqw 3.4cqw;
+    font-family: "Chewy", system-ui;
+    font-size: 7cqw;
+    letter-spacing: 0.7cqw;
+    line-height: 1;
+    color: #ffffff;
+    background: linear-gradient(180deg, #e0761f, #b8531a);
+    border: 3px solid #ffffff;
+    border-radius: 999px;
+    box-shadow:
+      0 8px 0 #7c3610,
+      0 14px 26px rgba(80,25,0,0.55),
+      0 0 0 1px rgba(0,0,0,0.15);
+    cursor: pointer;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.45);
+    animation: pulse 1.8s ease-in-out infinite;
+    transition: transform .09s ease, box-shadow .09s ease;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.045); }
+  }
+  .play-btn:hover { transform: translateY(-2px) scale(1.05); }
+  .play-btn:active {
+    transform: translateY(5px) scale(0.98);
+    box-shadow: 0 3px 0 #7c3610, 0 8px 16px rgba(80,25,0,0.5);
+    animation: none;
+  }
+
+  .best-line {
+    margin-top: 6cqw;
+    font-family: "Chewy", system-ui;
+    font-size: 4.4cqw;
+    letter-spacing: 0.4cqw;
+    line-height: 1;
+    color: #ffffff;
+    background: rgba(124,54,16,0.55);
+    border: 2px solid rgba(255,255,255,0.85);
+    border-radius: 999px;
+    padding: 1.6cqw 5.5cqw 2.2cqw;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.55);
+    backdrop-filter: blur(2px);
+  }
+
+  .hint {
+    position: absolute;
+    bottom: 4.5%;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: "Chewy", system-ui;
+    font-size: 3.4cqw;
+    letter-spacing: 0.7cqw;
+    color: #ffffff;
+    opacity: 0.9;
+    text-shadow: 0 2px 6px rgba(80,30,0,0.65);
+    z-index: 2;
+  }
+
+  /* ================= ABOUT MODAL ================= */
+  #aboutModal {
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5%;
+    background: rgba(10,14,22,0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+  }
+  #aboutModal.show { opacity: 1; pointer-events: auto; }
+
+  .about-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: linear-gradient(180deg, #1c2a3a, #0d141d);
+    border: 3px solid #ffffff;
+    border-radius: 22px;
+    padding: 7% 7% 6%;
+    text-align: center;
+    color: #ffffff;
+    box-shadow:
+      0 18px 44px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.08) inset;
+    transform: translateY(16px) scale(0.95);
+    transition: transform .32s cubic-bezier(.2,.9,.3,1.2);
+  }
+  #aboutModal.show .about-card { transform: translateY(0) scale(1); }
+
+  .about-avatar {
+    width: 20cqw;
+    height: 20cqw;
+    margin: 0 auto 3cqw;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #e0761f, #b8531a);
+    border: 3px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Chewy", system-ui;
+    font-size: 8cqw;
+    line-height: 1;
+    padding-top: 1cqw;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    box-shadow: 0 6px 0 #7c3610, 0 0 24px rgba(224,118,31,0.45);
+  }
+
+  .about-title {
+    font-family: "Chewy", system-ui;
+    font-size: 3.9cqw;
+    letter-spacing: 0.7cqw;
+    text-transform: uppercase;
+    color: #ffffff;
+    opacity: 0.75;
+    margin-bottom: 1.2cqw;
+  }
+  .about-name {
+    font-family: "Chewy", system-ui;
+    font-size: 8.5cqw;
+    line-height: 1;
+    letter-spacing: 0.2cqw;
+    color: #ffffff;
+    text-shadow: 0 3px 8px rgba(0,0,0,0.55);
+  }
+  .about-role {
+    margin-top: 1.8cqw;
+    font-family: "Chewy", system-ui;
+    font-size: 3.9cqw;
+    color: #ffffff;
+    opacity: 0.8;
+  }
+
+  .about-rule {
+    width: 30%;
+    height: 2px;
+    margin: 4cqw auto;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  }
+
+  .about-text {
+    font-family: "Chewy", system-ui;
+    font-size: 4.3cqw;
+    line-height: 1.45;
+    color: #ffffff;
+    margin-bottom: 2.6cqw;
+  }
+  .about-text b {
+    color: #ffffff;
+    text-shadow: 0 0 12px rgba(255,215,120,0.9);
+  }
+
+  .about-feedback {
+    font-family: "Chewy", system-ui;
+    font-size: 4.3cqw;
+    line-height: 1.35;
+    color: #ffffff;
+    background: rgba(224,118,31,0.35);
+    border: 2px solid rgba(255,255,255,0.55);
+    border-radius: 12px;
+    padding: 2.4cqw 3cqw;
+    margin-bottom: 4cqw;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+
+  .about-tags {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2cqw;
+    margin-bottom: 5cqw;
+  }
+  .about-tags span {
+    font-family: "Chewy", system-ui;
+    font-size: 3.5cqw;
+    letter-spacing: 0.3cqw;
+    color: #ffffff;
+    background: rgba(224,118,31,0.35);
+    border: 2px solid rgba(255,255,255,0.6);
+    border-radius: 999px;
+    padding: 1cqw 3cqw 1.4cqw;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.5);
+  }
+
+  .about-close {
+    display: block;
+    width: 100%;
+    padding: 2.4cqw 0 3.2cqw;
+    font-family: "Chewy", system-ui;
+    font-size: 5.6cqw;
+    letter-spacing: 0.6cqw;
+    line-height: 1;
+    color: #ffffff;
+    background: linear-gradient(180deg, #e0761f, #b8531a);
+    border: 3px solid #ffffff;
+    border-radius: 999px;
+    box-shadow: 0 6px 0 #7c3610;
+    cursor: pointer;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    transition: transform .1s ease, box-shadow .1s ease;
+  }
+  .about-close:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #7c3610;
+  }
+
+  @media (max-height: 520px) {
+    #aboutBtn { font-size: clamp(10px, 3cqw, 16px); padding: 0.7em 1.1em 0.85em; }
+  }
+</style>
+</head>
+<body>
+<div id="wrapper">
+  <canvas id="game"></canvas>
+
+  <!-- ============ ABOUT BUTTON ============ -->
+  <button id="aboutBtn" class="chewy-regular">ABOUT</button>
+
+  <!-- ============ ALIYAN PRODUCTION INTRO (2s) ============ -->
+  <div id="aliyan">
+    <div class="aliyan-ring"><span>A</span></div>
+    <div class="aliyan-text">
+      <div class="small">Presented&nbsp;By</div>
+      <div class="big">An <em>Aliyan</em> Production</div>
+      <div class="rule"></div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN SPLASH SCREEN ================= -->
+  <div id="splash">
+    <div class="splash-inner">
+
+      <div class="bunny-badge">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="38" cy="24" rx="7" ry="19" fill="#fffdf8" stroke="#e0d2be" stroke-width="3" transform="rotate(-14 38 24)"/>
+          <ellipse cx="38" cy="24" rx="3.2" ry="12" fill="#ffc3ce" transform="rotate(-14 38 24)"/>
+          <ellipse cx="62" cy="24" rx="7" ry="19" fill="#fffdf8" stroke="#e0d2be" stroke-width="3" transform="rotate(14 62 24)"/>
+          <ellipse cx="62" cy="24" rx="3.2" ry="12" fill="#ffc3ce" transform="rotate(14 62 24)"/>
+          <ellipse cx="50" cy="62" rx="27" ry="22" fill="#fffdf8" stroke="#e0d2be" stroke-width="3"/>
+          <ellipse cx="62" cy="66" rx="7" ry="4.5" fill="rgba(255,168,180,0.55)"/>
+          <circle cx="60" cy="54" r="5.4" fill="#3a2e28"/>
+          <circle cx="61.8" cy="52.2" r="2" fill="#fff"/>
+          <ellipse cx="72" cy="63" rx="3.6" ry="3" fill="#ff9aa8"/>
+          <g stroke="rgba(120,100,90,0.55)" stroke-width="1.6" stroke-linecap="round">
+            <line x1="70" y1="64" x2="84" y2="60"/>
+            <line x1="70" y1="66" x2="84" y2="66"/>
+            <line x1="70" y1="68" x2="84" y2="72"/>
+          </g>
+          <ellipse cx="25" cy="66" rx="9" ry="8" fill="#fffdf8" stroke="#e0d2be" stroke-width="3"/>
+        </svg>
+      </div>
+
+      <div class="title">FLAPPY</div>
+      <div class="title" style="margin-top:1cqw">RABBIT</div>
+      <div class="subtitle">Hop · Dodge · Score</div>
+
+      <button id="playBtn" class="play-btn chewy-regular">PLAY</button>
+
+      <div class="best-line" id="bestLine">BEST · 0</div>
+    </div>
+
+    <div class="hint">TAP · CLICK · SPACE TO FLAP</div>
+  </div>
+
+  <!-- ================= ABOUT MODAL ================= -->
+  <div id="aboutModal">
+    <div class="about-card">
+      <div class="about-avatar">MA</div>
+
+      <div class="about-title">About the Developer</div>
+      <div class="about-name">Muhammad Aliyan</div>
+      <div class="about-role">BSCS Student · Virtual University</div>
+
+      <div class="about-rule"></div>
+
+      <p class="about-text">
+        I design and develop <b>Websites</b>, <b>Android apps</b> &amp; <b>games</b>
+        with a mix of my own logic and AI assistance.
+      </p>
+
+      <p class="about-text">Always learning, always building.</p>
+
+      <p class="about-feedback">Your feedback helps me improve!</p>
+
+      <div class="about-tags">
+        <span>Websites</span>
+        <span>Android apps</span>
+        <span>Games</span>
+      </div>
+
+      <button id="aboutClose" class="about-close chewy-regular">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------- setup
+  const cvs        = document.getElementById('game');
+  const ctx        = cvs.getContext('2d');
+  const splash     = document.getElementById('splash');
+  const aliyan     = document.getElementById('aliyan');
+  const playBtn    = document.getElementById('playBtn');
+  const bestLine   = document.getElementById('bestLine');
+  const aboutBtn   = document.getElementById('aboutBtn');
+  const aboutModal = document.getElementById('aboutModal');
+  const aboutClose = document.getElementById('aboutClose');
+
+  const W = 400, H = 600;
+  const FLOOR = 520;
+
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  cvs.width  = W * DPR;
+  cvs.height = H * DPR;
+
+  // ------------------------------------------------------------- constants
+  const GRAVITY   = 0.44;
+  const FLAP      = -7.6;
+  const MAX_FALL  = 12;
+  const SPEED     = 2.6;
+  const PIPE_W    = 66;
+  const GAP       = 162;
+  const SPACING   = 210;
+  const R_RAD     = 15;
+  const GAP_MIN   = 140;
+  const GAP_MAX   = FLOOR - 140;
+
+  // ----------------------------------------------------------------- state
+  let state = 'intro';
+  let score = 0;
+  let best  = 0;
+  let time  = 0;
+  let distSinceSpawn = 0;
+  let groundScroll   = 0;
+  let overAt   = 0;
+  let shake    = 0;
+  let scorePop = 0;
+  let flash    = 0;
+
+  try { best = parseInt(localStorage.getItem('flappyRabbitBest') || '0', 10) || 0; } catch (e) { best = 0; }
+  bestLine.textContent = 'BEST · ' + best;
+
+  const rabbit    = { x: 112, y: 260, vy: 0, rot: 0 };
+  const pipes     = [];
+  const particles = [];
+  const clouds    = [];
+
+  for (let i = 0; i < 6; i++) {
+    clouds.push({
+      x: Math.random() * W,
+      y: 40 + Math.random() * 190,
+      s: 0.55 + Math.random() * 0.75,
+      v: 0.12 + Math.random() * 0.25
+    });
+  }
+
+  // ---------------------------------------------------- about button state
+  function updateAboutBtn() {
+    const visible = (state === 'ready' || state === 'over');
+    aboutBtn.classList.toggle('hidden', !visible);
+  }
+
+  function openAbout(e) {
+    if (e) e.stopPropagation();
+    initAudio();
+    aboutModal.classList.add('show');
+  }
+  function closeAbout(e) {
+    if (e) e.stopPropagation();
+    aboutModal.classList.remove('show');
+  }
+
+  aboutBtn.addEventListener('click', openAbout);
+  aboutClose.addEventListener('click', closeAbout);
+  aboutModal.addEventListener('click', function (e) {
+    if (e.target === aboutModal) closeAbout();
+  });
+
+  // ------------------------------------------------------- intro sequence
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      aliyan.classList.add('hide');
+      splash.classList.add('show');
+      state = 'ready';
+      updateAboutBtn();
+      setTimeout(function () { aliyan.style.display = 'none'; }, 700);
+    }, 2000);
+  });
+
+  // ------------------------------------------------------------- audio
+  let actx = null;
+  function initAudio() {
+    if (!actx) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; }
+    }
+    if (actx && actx.state === 'suspended') actx.resume();
+  }
+  function beep(freq, dur, type, vol, slideTo) {
+    if (!actx) return;
+    try {
+      const t = actx.currentTime;
+      const o = actx.createOscillator();
+      const g = actx.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, t);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+      g.gain.setValueAtTime(vol || 0.06, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+  const SFX = {
+    flap:  () => beep(520, 0.09, 'square',   0.045, 780),
+    score: () => beep(880, 0.11, 'sine',     0.06,  1320),
+    hit:   () => beep(190, 0.28, 'sawtooth', 0.07,  60)
+  };
+
+  // --------------------------------------------------------------- helpers
+  const FONT = '"Chewy", "Trebuchet MS", system-ui, sans-serif';
+
+  function roundRect(x, y, w, h, r) {
+    r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y,     x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x,     y + h, r);
+    ctx.arcTo(x,     y + h, x,     y,     r);
+    ctx.arcTo(x,     y,     x + w, y,     r);
+    ctx.closePath();
+  }
+
+  function circleRect(cx, cy, r, rx, ry, rw, rh) {
+    const nx = Math.max(rx, Math.min(cx, rx + rw));
+    const ny = Math.max(ry, Math.min(cy, ry + rh));
+    const dx = cx - nx, dy = cy - ny;
+    return dx * dx + dy * dy < r * r;
+  }
+
+  function text(str, x, y, size, color, align, weight, outline) {
+    align   = align   || 'center';
+    weight  = weight  || '400';
+    outline = (outline === undefined) ? true : outline;
+    ctx.font = weight + ' ' + size + 'px ' + FONT;
+    ctx.textAlign = align;
+    ctx.textBaseline = 'middle';
+    if (outline) {
+      ctx.lineWidth = Math.max(3, size * 0.16);
+      ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+      ctx.lineJoin = 'round';
+      ctx.strokeText(str, x, y);
+    }
+    ctx.fillStyle = color;
+    ctx.fillText(str, x, y);
+  }
+
+  // ------------------------------------------------------------ game logic
+  function reset() {
+    rabbit.y = 260;
+    rabbit.vy = 0;
+    rabbit.rot = 0;
+    pipes.length = 0;
+    particles.length = 0;
+    score = 0;
+    scorePop = 0;
+    shake = 0;
+    flash = 0;
+    distSinceSpawn = SPACING - 120;
+  }
+
+  function start() {
+    reset();
+    state = 'playing';
+    updateAboutBtn();
+    doFlap();
+  }
+
+  function doFlap() {
+    rabbit.vy = FLAP;
+    for (let i = 0; i < 5; i++) {
+      particles.push({
+        x: rabbit.x - 14 + Math.random() * 10,
+        y: rabbit.y + 10 + Math.random() * 10,
+        vx: -1.2 - Math.random() * 1.6,
+        vy: 0.4 + Math.random() * 1.3,
+        life: 1,
+        r: 2 + Math.random() * 3.5,
+        color: 'rgba(255,255,255,0.9)'
+      });
+    }
+    SFX.flap();
+  }
+
+  function spawnPipe() {
+    const gapY = GAP_MIN + Math.random() * (GAP_MAX - GAP_MIN);
+    pipes.push({ x: W + 10, gapY: gapY, scored: false });
+  }
+
+  function die() {
+    if (state !== 'playing') return;
+    state = 'over';
+    overAt = performance.now();
+    shake = 12;
+    flash = 1;
+    SFX.hit();
+    updateAboutBtn();
+
+    for (let i = 0; i < 16; i++) {
+      particles.push({
+        x: rabbit.x,
+        y: rabbit.y,
+        vx: (Math.random() - 0.5) * 7,
+        vy: (Math.random() - 0.5) * 7 - 1.5,
+        life: 1,
+        r: 2 + Math.random() * 4,
+        color: i % 3 === 0 ? 'rgba(255,170,180,0.9)' : 'rgba(255,255,255,0.9)'
+      });
+    }
+
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem('flappyRabbitBest', String(best)); } catch (e) {}
+      bestLine.textContent = 'BEST · ' + best;
+    }
+  }
+
+  function checkCollisions() {
+    if (rabbit.y + R_RAD >= FLOOR) {
+      rabbit.y = FLOOR - R_RAD;
+      die();
+      return;
+    }
+    for (let i = 0; i < pipes.length; i++) {
+      const p = pipes[i];
+      const gapTop = p.gapY - GAP / 2;
+      const gapBot = p.gapY + GAP / 2;
+      const r = R_RAD * 0.92;
+      if (circleRect(rabbit.x, rabbit.y, r, p.x, -300, PIPE_W, gapTop + 300) ||
+          circleRect(rabbit.x, rabbit.y, r, p.x, gapBot, PIPE_W, H - gapBot + 50)) {
+        die();
+        return;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------- update
+  function update(dt) {
+    time += dt;
+
+    for (let i = 0; i < clouds.length; i++) {
+      const c = clouds[i];
+      c.x -= c.v * dt;
+      if (c.x < -150) { c.x = W + 150; c.y = 40 + Math.random() * 190; }
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 0.05 * dt;
+      p.life -= 0.032 * dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    if (shake > 0) shake = Math.max(0, shake - 0.7 * dt);
+    if (flash > 0) flash = Math.max(0, flash - 0.06 * dt);
+    if (scorePop > 0) scorePop = Math.max(0, scorePop - 0.055 * dt);
+
+    if (state !== 'over') groundScroll += SPEED * dt;
+
+    if (state === 'ready') {
+      rabbit.y = 260 + Math.sin(time * 0.06) * 10;
+      rabbit.rot = Math.sin(time * 0.06) * 0.09;
+      rabbit.vy = 0;
+    }
+    else if (state === 'playing') {
+      rabbit.vy = Math.min(rabbit.vy + GRAVITY * dt, MAX_FALL);
+      rabbit.y += rabbit.vy * dt;
+
+      const target = Math.max(-0.5, Math.min(1.15, rabbit.vy * 0.055));
+      rabbit.rot += (target - rabbit.rot) * 0.16 * dt;
+
+      if (rabbit.y < R_RAD + 4) {
+        rabbit.y = R_RAD + 4;
+        rabbit.vy = Math.max(rabbit.vy, 0);
+      }
+
+      distSinceSpawn += SPEED * dt;
+      if (distSinceSpawn >= SPACING) {
+        distSinceSpawn -= SPACING;
+        spawnPipe();
+      }
+
+      for (let i = pipes.length - 1; i >= 0; i--) {
+        const p = pipes[i];
+        p.x -= SPEED * dt;
+        if (p.x + PIPE_W < -20) { pipes.splice(i, 1); continue; }
+        if (!p.scored && p.x + PIPE_W < rabbit.x - R_RAD * 0.5) {
+          p.scored = true;
+          score++;
+          scorePop = 1;
+          SFX.score();
+        }
+      }
+
+      checkCollisions();
+    }
+    else if (state === 'over') {
+      rabbit.vy = Math.min(rabbit.vy + GRAVITY * 1.25 * dt, 15);
+      rabbit.y += rabbit.vy * dt;
+      rabbit.rot = Math.min(rabbit.rot + 0.055 * dt, 1.7);
+      if (rabbit.y > FLOOR - 15) {
+        rabbit.y = FLOOR - 15;
+        rabbit.vy = 0;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------- rendering
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, FLOOR);
+  skyGrad.addColorStop(0,    '#4fb3e8');
+  skyGrad.addColorStop(0.55, '#8fd6f2');
+  skyGrad.addColorStop(1,    '#d9f2fb');
+
+  function drawSky() {
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(-30, -30, W + 60, FLOOR + 30);
+  }
+
+  function drawSun() {
+    const g = ctx.createRadialGradient(332, 78, 8, 332, 78, 96);
+    g.addColorStop(0,    'rgba(255,248,205,0.95)');
+    g.addColorStop(0.35, 'rgba(255,238,155,0.45)');
+    g.addColorStop(1,    'rgba(255,238,155,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(332, 78, 96, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fff8cf';
+    ctx.beginPath();
+    ctx.arc(332, 78, 30, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawClouds() {
+    for (let i = 0; i < clouds.length; i++) {
+      const c = clouds[i];
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.scale(c.s, c.s);
+      ctx.fillStyle = 'rgba(255,255,255,0.82)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 26, 0, Math.PI * 2);
+      ctx.arc(28, -8, 20, 0, Math.PI * 2);
+      ctx.arc(-28, 5, 18, 0, Math.PI * 2);
+      ctx.arc(8, 11, 17, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawHills() {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, W, FLOOR);
+    ctx.clip();
+
+    const gap = 170, r = 135;
+    const off = -((groundScroll * 0.25) % gap);
+    ctx.fillStyle = '#b9e79c';
+    for (let x = off - gap; x < W + gap; x += gap) {
+      ctx.beginPath();
+      ctx.arc(x + gap * 0.5, FLOOR + 55, r, Math.PI, 0);
+      ctx.fill();
+    }
+
+    const gap2 = 130, r2 = 90;
+    const off2 = -((groundScroll * 0.45) % gap2);
+    ctx.fillStyle = '#a3dd82';
+    for (let x = off2 - gap2; x < W + gap2; x += gap2) {
+      ctx.beginPath();
+      ctx.arc(x + gap2 * 0.5, FLOOR + 48, r2, Math.PI, 0);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function drawCarrot(x, y, w, h) {
+    if (h <= 2) return;
+
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0,    '#c95c12');
+    g.addColorStop(0.20, '#f0912f');
+    g.addColorStop(0.48, '#ffb865');
+    g.addColorStop(0.72, '#f59a3c');
+    g.addColorStop(1,    '#b85210');
+
+    roundRect(x, y, w, h, 14);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(140,64,8,0.5)';
+    ctx.stroke();
+
+    ctx.save();
+    roundRect(x, y, w, h, 14);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(168,84,14,0.25)';
+    ctx.lineWidth = 2.5;
+    for (let yy = y + 24; yy < y + h; yy += 25) {
+      ctx.beginPath();
+      ctx.moveTo(x + 5, yy);
+      ctx.quadraticCurveTo(x + w / 2, yy + 7, x + w - 5, yy);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawLeaves(cx, cy, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(1, dir);
+    for (let i = -2; i <= 2; i++) {
+      ctx.save();
+      ctx.rotate(i * 0.36);
+      ctx.beginPath();
+      ctx.ellipse(0, -8, 5.2, 11, 0, 0, Math.PI * 2);
+      ctx.fillStyle = (i % 2 === 0) ? '#57a832' : '#6cc244';
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 21, 7, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#4f9c2e';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPipe(p) {
+    const gapTop = p.gapY - GAP / 2;
+    const gapBot = p.gapY + GAP / 2;
+
+    drawCarrot(p.x, -60, PIPE_W, gapTop + 60);
+    drawLeaves(p.x + PIPE_W / 2, gapTop - 3, -1);
+
+    drawCarrot(p.x, gapBot, PIPE_W, FLOOR - gapBot + 8);
+    drawLeaves(p.x + PIPE_W / 2, gapBot + 3, 1);
+  }
+
+  function drawGround() {
+    ctx.fillStyle = '#6cb43a';
+    ctx.fillRect(0, FLOOR, W, H - FLOOR);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, FLOOR + 16, W, H - FLOOR - 16);
+    ctx.clip();
+    ctx.fillStyle = 'rgba(255,255,255,0.09)';
+    const off = groundScroll % 48;
+    for (let x = -48; x < W + 48; x += 48) {
+      ctx.fillRect(x - off, FLOOR + 16, 24, H);
+    }
+    ctx.restore();
+
+    ctx.fillStyle = '#8fd14f';
+    ctx.fillRect(0, FLOOR, W, 14);
+
+    ctx.fillStyle = '#a5e065';
+    const off2 = groundScroll % 40;
+    for (let x = -40; x < W + 40; x += 40) {
+      const px = x - off2;
+      ctx.beginPath();
+      ctx.moveTo(px, FLOOR);
+      ctx.lineTo(px + 7, FLOOR - 8);
+      ctx.lineTo(px + 14, FLOOR);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.fillStyle = 'rgba(58,102,26,0.55)';
+    ctx.fillRect(0, FLOOR + 14, W, 3);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.13)';
+    ctx.fillRect(0, H - 16, W, 16);
+  }
+
+  function drawEar(bx, by, angle) {
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(angle);
+
+    ctx.beginPath();
+    ctx.ellipse(0, -15, 6, 16, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#fffdf8';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#e0d2be';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(0, -15, 3, 10.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffc3ce';
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawRabbit() {
+    const x = rabbit.x, y = rabbit.y;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rabbit.rot);
+
+    const earLag = Math.max(-0.5, Math.min(0.55, rabbit.vy * 0.05));
+
+    ctx.beginPath();
+    ctx.ellipse(-19, 3, 9, 8, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#fffdf8';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#e0d2be';
+    ctx.stroke();
+
+    drawEar(-8, -11, -0.38 + earLag);
+    drawEar(1, -14, -0.10 + earLag);
+
+    ctx.beginPath();
+    ctx.ellipse(-7, 15, 9, 6, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#f6ead8';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#e0d2be';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 18, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#fffdf8';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#e0d2be';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(2, 6, 13, 9, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,236,222,0.75)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(9, 13, 8, 6, -0.2, 0, Math.PI * 2);
+    ctx.fillStyle = '#f6ead8';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#e0d2be';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(9, 5, 6, 4, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,168,180,0.55)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(11, -6, 4.6, 0, Math.PI * 2);
+    ctx.fillStyle = '#3a2e28';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(12.6, -7.6, 1.7, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(20, 1, 3.2, 2.6, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff9aa8';
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(120,100,90,0.5)';
+    ctx.lineWidth = 1.4;
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(18, 2 + i * 2.5);
+      ctx.lineTo(31, i * 5 + 1);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const a = Math.max(0, p.life);
+      ctx.globalAlpha = a * 0.85;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.4, p.r * a), 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawUI() {
+    if (state === 'playing') {
+      ctx.save();
+      ctx.translate(W / 2, 78);
+      const s = 1 + scorePop * 0.35;
+      ctx.scale(s, s);
+      text(String(score), 0, 0, 62, '#ffffff');
+      ctx.restore();
+    }
+
+    if (state === 'over') {
+      ctx.fillStyle = 'rgba(10,16,26,0.65)';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur = 30;
+      ctx.shadowOffsetY = 12;
+      roundRect(58, 150, 284, 274, 26);
+      ctx.fillStyle = '#16202e';
+      ctx.fill();
+      ctx.restore();
+
+      roundRect(58, 150, 284, 274, 26);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      text('GAME OVER', W / 2, 196, 34, '#ffffff', 'center', '400', false);
+
+      ctx.beginPath();
+      ctx.moveTo(92, 226);
+      ctx.lineTo(308, 226);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      text('SCORE', W / 2, 254, 18, '#ffffff', 'center', '400', false);
+      text(String(score), W / 2, 292, 50, '#ffffff', 'center', '400', false);
+
+      text('BEST', W / 2, 344, 18, '#ffffff', 'center', '400', false);
+      text(String(best), W / 2, 378, 32, '#ffffff', 'center', '400', false);
+
+      const a = 0.55 + Math.sin(time * 0.11) * 0.45;
+      ctx.globalAlpha = a;
+      text('TAP TO RETRY', W / 2, 484, 24, '#ffffff');
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function render() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    ctx.save();
+    if (shake > 0) {
+      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    }
+
+    drawSky();
+    drawSun();
+    drawClouds();
+    drawHills();
+
+    for (let i = 0; i < pipes.length; i++) drawPipe(pipes[i]);
+
+    drawGround();
+    drawParticles();
+    drawRabbit();
+
+    ctx.restore();
+
+    if (flash > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,' + (flash * 0.5) + ')';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    drawUI();
+  }
+
+  // ------------------------------------------------------------------ loop
+  let lastT = 0;
+  function loop(t) {
+    if (!lastT) lastT = t;
+    let dt = (t - lastT) / 16.6667;
+    lastT = t;
+    if (dt > 2.5) dt = 2.5;
+    if (dt < 0) dt = 0;
+
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // ----------------------------------------------------------------- input
+  function onDown(e) {
+    if (e && e.cancelable) e.preventDefault();
+    if (state === 'intro') return;
+    if (aboutModal.classList.contains('show')) return;
+    initAudio();
+
+    if (state === 'ready') {
+      start();
+    } else if (state === 'playing') {
+      doFlap();
+    } else if (state === 'over' && performance.now() - overAt > 420) {
+      reset();
+      state = 'ready';
+      updateAboutBtn();
+      splash.classList.add('show');
+      splash.classList.remove('hide');
+    }
+  }
+
+  cvs.addEventListener('pointerdown', onDown, { passive: false });
+  cvs.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  playBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    initAudio();
+    splash.classList.add('hide');
+    setTimeout(function () { splash.classList.remove('show'); }, 560);
+    start();
+  });
+
+  window.addEventListener('keydown', function (e) {
+    if (aboutModal.classList.contains('show')) {
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
+        e.preventDefault();
+        closeAbout();
+      }
+      return;
+    }
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW' || e.key === ' ') {
+      e.preventDefault();
+      if (state === 'ready' && splash.classList.contains('show')) {
+        playBtn.click();
+      } else {
+        onDown(e);
+      }
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchstart', function (e) {
+    if (e.target === cvs) e.preventDefault();
+  }, { passive: false });
+
+  // ------------------------------------------------------------------ boot
+  reset();
+  updateAboutBtn();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
